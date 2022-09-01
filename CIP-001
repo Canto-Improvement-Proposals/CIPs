@@ -1,0 +1,85 @@
+# Contract Secured Revenue (WIP)
+## CIP-001
+
+| CIP | Title                      | Author | Status | Type | Category | Created |
+|---  |---                         |---     |---     | ---  | ---      |  ---    | 
+| 001 | Contract Secured Revenue   |Zak Cole (@0xzak), Scott Lewis (@scott_lew_is) | Draft | Standards Track | Core | 2022-08-29 
+
+
+# Simple Summary
+
+A modified version of EIP-1559 that maintains the benefits of transient congestion management and provides a novel economic mechanism that allows contract creators to receive a portion of the gas fees consumed by their contracts within a given block.
+
+This document is a work-in-progress. If you would like to contribute, please submit a pull request in the appropriate repository.
+
+# Abstract
+
+We present a novel economic mechanism which modifies EIP-1559 to distribute a portion of the total base fee (an amount that would otherwise be burnt) to the deployers of the contracts that consume gas within a given block. This provides a protocol-level subsidy for developers and those responsible for attracting significant network activity. Our goal is to implement the CSR protocol with as few changes as possible to the existing EIP-1559 specification while also providing a simple and flexible user experience.
+
+# Specification
+The Accountant exists on the protocol layer and should be implemented as a Cosmos SDK module. As these processes will be responsible for maintaining significant portions of the network state, it must be implemented on the consensus-layer.  
+
+On the application layer, the CSR program functions as a series of smart contracts responsible for generating and maintaining a registry of eligible contract addresses. As a contract creator, participation is on an opt-in basis. Should a contract creator choose to deploy a CSR enabled contract, they must integrate support for the CSR Turnstile, described in the section below. Upon deployment of a CSR enabled contract, the contract creator is minted a CSR NFT. This NFT acts as a claim ticket for all future fees accrued. 
+
+## Turnstile
+`Turnstile.sol` is a smart contract that registers other smart contracts on behalf of Accountant.
+
+To opt-in to the CSR program and mint the CSR NFT, contract deployment transactions must call the `register` function on `Turnstile.sol` to append the newly deployed contract address to the Accountant’s registry.
+
+The register defaults to minting a new NFT as the `beneficiary` and sending that NFT to `fromAddr`, but the function can be called to assign an existing NFT as the beneficiary or send newly minted NFT to another address.
+
+The `beneficiary` is the NFT to which accrued fees are distributed.
+
+```
+turnstile.register(nftID = None, nftRecipient = None)
+
+## not specifying an existing `nftID` as beneficiary triggers the default case of minting a new NFT to `msg.sender`. 
+
+if nftID == None:
+
+
+    Mint an NFT with the next unused nftID 
+    Send the NFT to `nftRecipient` if specified or fromAddr if an nftRecipient is None.
+    Add key value pair of (contract address: next available nftID) to registry
+
+
+else:
+
+## Making an existing NFT the beneficiary of a newly deployed contract
+
+
+        add a key value pair (contractAddress:nftID) to registry
+
+turnstile.deploy(the smart contract, nftID = None, nftRecipient = None)
+
+## deploy is a helper function that lets devs easily use 
+turnstile.register in their deployment transaction.
+
+deploy contract onchain
+call turnstile.register(nftID, nftRecipient)
+
+
+```
+
+
+
+## Accountant
+
+When a given transaction is sealed within a block, the protocol parses the transaction data for ‘toAddr` and then finds the nftID beneficiaries, where they exist in the register, and accrues 20% of the burnt base fee to those nftIDs. This fee total is claimable at any time by the owner of the NFT. When the owner withdraws the accrued gas from the burnt `base_fee`, they may specify a withdrawal amount, less than or equal to available balance, defaulting to available balance, and a receiving address that is different from their own address to which the withdrawal amount is sent. If no address is specified when calling withdraw, the owner of the NFT receives the accrued fees. The accrued balance after withdrawal is set to zero.
+
+
+## Tooling
+Create tooling, potentially a Foundry module, to automate as much preparation work as possible for developers that choose to use turnstile.deploy.
+
+
+# Security Considerations
+
+## Malicious Contracts
+
+## Network Congestion
+
+
+# Future Upgrades
+Add a split between first called contract and underlying protocols called during the transaction
+
+
