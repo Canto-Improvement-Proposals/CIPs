@@ -3,7 +3,7 @@
 
 | CIP | Title                      | Author | Status | Type | Category | Created |
 |---  |---                         |---     |---     | ---  | ---      |  ---    | 
-| 000 | Contract Secured Revenue   |0xjones (@0xjones)[https://twitter.com/0xjones) | Draft | Meta | 2022-05-16 
+| 000 | Contract Secured Revenue   |0xjones [@0xjones](https://twitter.com/0xjones) | Draft | Meta | 2022-05-16 
 
 # What is a CPIP?
 
